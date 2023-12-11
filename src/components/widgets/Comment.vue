@@ -83,7 +83,7 @@
       <p class="version" v-if="comment.task_status_name === 'RETAKE'">
       </p>
 
-      <p v-html="compileMarkdown(comment.text)" class="comment-text">
+      <p dir="auto" v-html="compileMarkdown(comment.text)" class="comment-text">
       </p>
 
       <p class="comment-date">
