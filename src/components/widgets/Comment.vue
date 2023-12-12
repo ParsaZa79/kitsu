@@ -1,36 +1,20 @@
 <template>
   <div>
-    <article
-      :class="{
-        comment: true,
-        pinned: comment.pinned,
-        highlighted: highlighted
-      }"
-      :style="{
-        'box-shadow': boxShadowStyle
-      }"
-      v-if="!isEmpty"
-    >
+    <article :class="{
+      comment: true,
+      pinned: comment.pinned,
+      highlighted: highlighted
+    }" :style="{
+  'box-shadow': boxShadowStyle
+}" v-if="!isEmpty">
       <div class="content-wrapper full">
         <div class="flexrow">
-          <validation-tag
-            class="flexrow-item"
-            :task="{ task_status_id: comment.task_status.id }"
-            :is-static="true"
-            :thin="!isChange"
-          />
-          <people-avatar
-            class="flexrow-item"
-            :size="25"
-            :font-size="12"
-            :person="comment.person"
-            v-if="!isCurrentUserClient || isAuthorClient"
-          />
+          <validation-tag class="flexrow-item" :task="{ task_status_id: comment.task_status.id }" :is-static="true"
+            :thin="!isChange" />
+          <people-avatar class="flexrow-item" :size="25" :font-size="12" :person="comment.person"
+            v-if="!isCurrentUserClient || isAuthorClient" />
           <strong class="flexrow-item">
-            <people-name
-              :person="comment.person"
-              v-if="!isCurrentUserClient || isAuthorClient"
-            />
+            <people-name :person="comment.person" v-if="!isCurrentUserClient || isAuthorClient" />
           </strong>
           <div class="filler"></div>
           <span class="flexrow-item date" :title="fullDate">
@@ -38,89 +22,47 @@
           </span>
           <div class="flexrow-item menu-wrapper">
             <chevron-down-icon class="menu-icon" @click="toggleCommentMenu" />
-            <comment-menu
-              :is-pinned="comment.pinned"
-              :is-editable="editable"
-              @pin-clicked="$emit('pin-comment', comment)"
+            <comment-menu :is-pinned="comment.pinned" :is-editable="editable" @pin-clicked="$emit('pin-comment', comment)"
               @edit-clicked="
                 $emit('edit-comment', comment)
-                toggleCommentMenu()
-              "
-              @delete-clicked="
-                $emit('delete-comment', comment)
-                toggleCommentMenu()
-              "
-              ref="menu"
-            />
+              toggleCommentMenu()
+                " @delete-clicked="
+    $emit('delete-comment', comment)
+  toggleCommentMenu()
+    " ref="menu" />
           </div>
         </div>
         <div class="flexrow-item comment-content">
           <div class="content">
-            <p
-              class="client-comment"
-              v-if="isAuthorClient && !isCurrentUserClient"
-            >
+            <p class="client-comment" v-if="isAuthorClient && !isCurrentUserClient">
               <span>
                 {{ $t('comments.comment_from_client') }}
-                <copy-icon
-                  class="copy-icon"
-                  size="1.1x"
-                  @click="$emit('duplicate-comment', comment)"
-                />
+                <copy-icon class="copy-icon" size="1.1x" @click="$emit('duplicate-comment', comment)" />
               </span>
             </p>
-            <p
-              v-html="
-                renderComment(
-                  comment.text,
-                  comment.mentions,
-                  comment.department_mentions || [],
-                  personMap,
-                  departmentMap,
-                  uniqueClassName
-                )
-              "
-              class="comment-text"
-              v-if="comment.text"
-            ></p>
-            <checklist
-              class="checklist"
-              :checklist="checklist"
-              @remove-task="removeTask"
-              @keyup.native="emitChangeEvent($event)"
-              @emit-change="emitChangeEvent"
-              @time-code-clicked="onChecklistTimecodeClicked"
-              :disabled="true"
-              v-if="checklist.length > 0"
-            />
+            <p dir="auto" v-html="renderComment(
+              comment.text,
+              comment.mentions,
+              comment.department_mentions || [],
+              personMap,
+              departmentMap,
+              uniqueClassName
+            )
+              " class="comment-text" v-if="comment.text"></p>
+            <checklist class="checklist" :checklist="checklist" @remove-task="removeTask"
+              @keyup.native="emitChangeEvent($event)" @emit-change="emitChangeEvent"
+              @time-code-clicked="onChecklistTimecodeClicked" :disabled="true" v-if="checklist.length > 0" />
             <p class="has-text-centered" v-if="taskStatus.is_done && isLast">
-              <img
-                class="congrats-picture"
-                src="../../assets/illustrations/validated.png"
-              />
+              <img class="congrats-picture" src="../../assets/illustrations/validated.png" />
             </p>
             <p v-if="comment.attachment_files.length > 0">
-              <a
-                :href="getAttachmentPath(attachment)"
-                :key="attachment.id"
-                :title="attachment.name"
-                target="_blank"
-                v-for="attachment in pictureAttachments"
-              >
+              <a :href="getAttachmentPath(attachment)" :key="attachment.id" :title="attachment.name" target="_blank"
+                v-for="attachment in pictureAttachments">
                 <img class="attachment" :src="getAttachmentPath(attachment)" />
               </a>
-              <a
-                :href="getAttachmentPath(attachment)"
-                :key="attachment.id"
-                :title="attachment.name"
-                class="flexrow"
-                target="_blank"
-                v-for="attachment in fileAttachments"
-              >
-                <paperclip-icon
-                  size="1x"
-                  class="flexrow-item attachment-icon"
-                />
+              <a :href="getAttachmentPath(attachment)" :key="attachment.id" :title="attachment.name" class="flexrow"
+                target="_blank" v-for="attachment in fileAttachments">
+                <paperclip-icon size="1x" class="flexrow-item attachment-icon" />
                 <span class="flexrow-item">
                   {{ attachment.name }}
                 </span>
@@ -128,137 +70,79 @@
             </p>
             <div class="replies">
               <div>
-                <div
-                  :key="replyComment.id"
-                  class="reply-comment"
-                  v-for="replyComment in comment.replies || []"
-                >
+                <div :key="replyComment.id" class="reply-comment" v-for="replyComment in comment.replies || []">
                   <div class="flexrow">
-                    <people-avatar
-                      class="flexrow-item"
-                      :size="18"
-                      :font-size="10"
-                      :person="personMap.get(replyComment.person_id)"
-                    />
+                    <people-avatar class="flexrow-item" :size="18" :font-size="10"
+                      :person="personMap.get(replyComment.person_id)" />
                     <strong class="flexrow-item">
-                      <people-name
-                        :person="personMap.get(replyComment.person_id)"
-                      />
+                      <people-name :person="personMap.get(replyComment.person_id)" />
                     </strong>
-                    <span
-                      class="flexrow-item reply-date"
-                      :title="replyFullDate(replyComment.date)"
-                    >
+                    <span class="flexrow-item reply-date" :title="replyFullDate(replyComment.date)">
                       {{ replyShortDate(replyComment.date) }}
                     </span>
                     <span class="filler"> </span>
-                    <span
-                      class="flexrow-item reply-delete"
-                      :title="$t('main.delete')"
-                      @click="onDeleteReplyClicked(replyComment)"
-                      v-if="
-                        isCurrentUserAdmin || replyComment.person_id === user.id
-                      "
-                    >
+                    <span class="flexrow-item reply-delete" :title="$t('main.delete')"
+                      @click="onDeleteReplyClicked(replyComment)" v-if="isCurrentUserAdmin || replyComment.person_id === user.id
+                        ">
                       x
                     </span>
                   </div>
-                  <p
-                    v-html="
-                      renderComment(
-                        replyComment.text,
-                        replyComment.mentions || [],
-                        replyComment.department_mentions || [],
-                        personMap,
-                        departmentMap,
-                        ''
-                      )
-                    "
-                    class="comment-text"
-                  ></p>
+                  <p v-html="renderComment(
+                    replyComment.text,
+                    replyComment.mentions || [],
+                    replyComment.department_mentions || [],
+                    personMap,
+                    departmentMap,
+                    ''
+                  )
+                    " class="comment-text"></p>
                 </div>
               </div>
-              <at-ta
-                :members="atOptions"
-                name-key="full_name"
-                :limit="2"
-                @input="onAtTextChanged"
-              >
+              <at-ta :members="atOptions" name-key="full_name" :limit="2" @input="onAtTextChanged">
                 <template slot="item" slot-scope="team">
                   <template v-if="team.item.isTime"> ⏱️ frame </template>
                   <template v-else-if="team.item.isDepartment">
-                    <span
-                      class="mr05"
-                      :style="{
-                        background: team.item.color,
-                        width: '10px',
-                        height: '10px',
-                        'border-radius': '50%'
-                      }"
-                    >
+                    <span class="mr05" :style="{
+                      background: team.item.color,
+                      width: '10px',
+                      height: '10px',
+                      'border-radius': '50%'
+                    }">
                       &nbsp;
                     </span>
                     {{ team.item.full_name }}
                   </template>
                   <template v-else>
                     <div class="flexrow">
-                      <people-avatar
-                        class="flexrow-item"
-                        :person="team.item"
-                        :size="20"
-                        :font-size="11"
-                        :is-lazy="false"
-                        :is-link="false"
-                      />
+                      <people-avatar class="flexrow-item" :person="team.item" :size="20" :font-size="11" :is-lazy="false"
+                        :is-link="false" />
                       <span class="flexrow-item">
                         {{ team.item.full_name }}
                       </span>
                     </div>
                   </template>
                 </template>
-                <textarea
-                  ref="reply"
-                  class="reply"
-                  @keyup.ctrl.enter="onReplyClicked"
-                  v-model="replyText"
-                  v-show="showReply"
-                />
+                <textarea ref="reply" class="reply" @keyup.ctrl.enter="onReplyClicked" v-model="replyText"
+                  v-show="showReply" />
               </at-ta>
               <div class="has-text-right">
-                <button-simple
-                  class="reply-button"
-                  :text="$t('main.reply')"
-                  :is-loading="isReplyLoading"
-                  @click="onReplyClicked"
-                  v-show="showReply"
-                />
+                <button-simple class="reply-button" :text="$t('main.reply')" :is-loading="isReplyLoading"
+                  @click="onReplyClicked" v-show="showReply" />
               </div>
             </div>
 
-            <div
-              class="flexrow"
-              :title="isLikedBy"
-              v-if="comment.text.length > 0 || comment.previews.length > 0"
-            >
-              <button
-                :class="{
-                  'like-button': true,
-                  'like-button--empty':
-                    comment.like === undefined ? true : false,
-                  'flexrow-item': true
-                }"
-                @click="acknowledgeComment(comment)"
-                type="button"
-              >
+            <div class="flexrow" :title="isLikedBy" v-if="comment.text.length > 0 || comment.previews.length > 0">
+              <button :class="{
+                'like-button': true,
+                'like-button--empty':
+                  comment.like === undefined ? true : false,
+                'flexrow-item': true
+              }" @click="acknowledgeComment(comment)" type="button">
                 <thumbs-up-icon size="1x" />
                 <span>{{ comment.acknowledgements.length }}</span>
               </button>
               <span class="filler"> </span>
-              <span
-                class="flexrow-item reply-button"
-                @click="showReplyWidget"
-                v-if="!showReply"
-              >
+              <span class="flexrow-item reply-button" @click="showReplyWidget" v-if="!showReply">
                 {{ $t('main.reply') }}
               </span>
             </div>
@@ -268,22 +152,13 @@
           </div>
         </div>
       </div>
-      <div
-        class="flexrow content-wrapper preview-info"
-        v-if="comment.previews.length > 0"
-      >
-        <router-link
-          class="flexrow-item round-name revision"
-          :to="previewRoute"
-        >
+      <div class="flexrow content-wrapper preview-info" v-if="comment.previews.length > 0">
+        <router-link class="flexrow-item round-name revision" :to="previewRoute">
           Revision {{ comment.previews[0].revision }}
         </router-link>
-        <span
-          class="flexrow-item preview-status"
-          :title="comment.previews[0].validation_status"
+        <span class="flexrow-item preview-status" :title="comment.previews[0].validation_status"
           :style="getPreviewValidationStyle(comment.previews[0])"
-          @click="changePreviewValidationStatus(comment.previews[0])"
-        >
+          @click="changePreviewValidationStatus(comment.previews[0])">
           &nbsp;
         </span>
       </div>
@@ -298,18 +173,9 @@
     </article>
     <div class="empty-comment" v-else>
       <div class="flexrow content-wrapper">
-        <validation-tag
-          class="flexrow-item"
-          :task="{ task_status_id: comment.task_status.id }"
-          :is-static="true"
-          :thin="!isChange"
-        />
-        <people-avatar
-          class="flexrow-item"
-          :person="comment.person"
-          :size="25"
-          :font-size="12"
-        />
+        <validation-tag class="flexrow-item" :task="{ task_status_id: comment.task_status.id }" :is-static="true"
+          :thin="!isChange" />
+        <people-avatar class="flexrow-item" :person="comment.person" :size="25" :font-size="12" />
         <people-name class="flexrow-item" :person="comment.person" />
         <span class="filler"> </span>
         <span class="flexrow-item date" :title="fullDate">
@@ -317,20 +183,14 @@
         </span>
         <div class="flexrow-item menu-wrapper">
           <chevron-down-icon class="menu-icon" @click="toggleCommentMenu" />
-          <comment-menu
-            :is-editable="editable"
-            :is-empty="true"
-            @pin-clicked="$emit('pin-comment', comment)"
+          <comment-menu :is-editable="editable" :is-empty="true" @pin-clicked="$emit('pin-comment', comment)"
             @edit-clicked="
               $emit('edit-comment', comment)
-              toggleCommentMenu()
-            "
-            @delete-clicked="
-              $emit('delete-comment', comment)
-              toggleCommentMenu()
-            "
-            ref="menu"
-          />
+            toggleCommentMenu()
+              " @delete-clicked="
+    $emit('delete-comment', comment)
+  toggleCommentMenu()
+    " ref="menu" />
         </div>
       </div>
     </div>
@@ -394,7 +254,7 @@ export default {
   props: {
     comment: {
       type: Object,
-      default: () => {}
+      default: () => { }
     },
     team: {
       type: Array,
